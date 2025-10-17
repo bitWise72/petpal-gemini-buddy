@@ -1,7 +1,7 @@
 project_id = "ukizxbvdtidekmninpvv"
 
 [functions.analyze-pet-photo]
-verify_jwt = false
+verify_jwt = true
 
 [functions.chat-assistant]
-verify_jwt = false
+verify_jwt = true

@@ -22,13 +22,21 @@ export const ProductRecommendations = ({ products }: ProductRecommendationsProps
 
   const addToCart = async (product: Product) => {
     try {
-      const sessionId = localStorage.getItem('sessionId') || crypto.randomUUID();
-      localStorage.setItem('sessionId', sessionId);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Authentication Required",
+          description: "Please sign in to add items to cart.",
+          variant: "destructive"
+        });
+        return;
+      }
 
       const { error } = await supabase
         .from('cart_items')
         .insert({
-          session_id: sessionId,
+          user_id: user.id,
+          session_id: user.id, // Using user_id as session_id for compatibility
           product_id: product.id,
           quantity: 1
         });

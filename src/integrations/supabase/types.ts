@@ -21,6 +21,7 @@ export type Database = {
           product_id: string | null
           quantity: number | null
           session_id: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string | null
@@ -28,6 +29,7 @@ export type Database = {
           product_id?: string | null
           quantity?: number | null
           session_id: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string | null
@@ -35,6 +37,7 @@ export type Database = {
           product_id?: string | null
           quantity?: number | null
           session_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -53,6 +56,7 @@ export type Database = {
           pet_analysis: Json | null
           pet_image_url: string | null
           session_id: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string | null
@@ -60,6 +64,7 @@ export type Database = {
           pet_analysis?: Json | null
           pet_image_url?: string | null
           session_id: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string | null
@@ -67,6 +72,7 @@ export type Database = {
           pet_analysis?: Json | null
           pet_image_url?: string | null
           session_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -111,6 +117,7 @@ export type Database = {
           session_id: string
           status: string | null
           total_amount: number
+          user_id: string | null
         }
         Insert: {
           conversation_id?: string | null
@@ -120,6 +127,7 @@ export type Database = {
           session_id: string
           status?: string | null
           total_amount: number
+          user_id?: string | null
         }
         Update: {
           conversation_id?: string | null
@@ -129,6 +137,7 @@ export type Database = {
           session_id?: string
           status?: string | null
           total_amount?: number
+          user_id?: string | null
         }
         Relationships: [
           {

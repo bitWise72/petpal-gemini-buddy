@@ -1,21 +1,68 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { LogOut } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { User } from '@supabase/supabase-js';
 import { PetPhotoUpload } from '@/components/PetPhotoUpload';
 import { ChatInterface } from '@/components/ChatInterface';
 import { CheckoutPage } from '@/components/CheckoutPage';
+import { Button } from '@/components/ui/button';
 import pettryMascot from '@/assets/pettry-mascot.jpg';
 
 type AppState = 'upload' | 'chat' | 'checkout';
 
 const Index = () => {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
   const [appState, setAppState] = useState<AppState>('upload');
   const [petAnalysis, setPetAnalysis] = useState('');
   const [petImageUrl, setPetImageUrl] = useState('');
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+      if (!session) {
+        navigate('/auth');
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      if (!session) {
+        navigate('/auth');
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate('/auth');
+  };
 
   const handleAnalysisComplete = (analysis: string, imageUrl: string) => {
     setPetAnalysis(analysis);
     setPetImageUrl(imageUrl);
     setAppState('chat');
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <img src={pettryMascot} alt="Pettry" className="w-24 h-24 mx-auto rounded-full object-cover animate-pulse" />
+          <p className="mt-4 text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
@@ -35,6 +82,13 @@ const Index = () => {
                 </h1>
                 <p className="text-xs text-muted-foreground">AI Pet Solutions</p>
               </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-muted-foreground hidden sm:block">{user.email}</span>
+              <Button variant="outline" size="sm" onClick={handleSignOut}>
+                <LogOut className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Sign Out</span>
+              </Button>
             </div>
           </div>
         </div>
