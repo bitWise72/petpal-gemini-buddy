@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { PetPhotoUpload } from '@/components/PetPhotoUpload';
 import { ChatInterface } from '@/components/ChatInterface';
 import { CheckoutPage } from '@/components/CheckoutPage';
-import { PawPrint } from 'lucide-react';
+import pettryMascot from '@/assets/pettry-mascot.jpg';
 
 type AppState = 'upload' | 'chat' | 'checkout';
 
@@ -24,14 +24,16 @@ const Index = () => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="bg-primary rounded-full p-2">
-                <PawPrint className="h-6 w-6 text-primary-foreground" />
-              </div>
+              <img 
+                src={pettryMascot} 
+                alt="Pettry Mascot" 
+                className="h-12 w-12 rounded-full object-cover"
+              />
               <div>
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                  PawPal Pet Store
+                  Pettry
                 </h1>
-                <p className="text-xs text-muted-foreground">AI-Powered Pet Shopping</p>
+                <p className="text-xs text-muted-foreground">AI Pet Solutions</p>
               </div>
             </div>
           </div>
@@ -43,14 +45,19 @@ const Index = () => {
         {appState === 'upload' && (
           <div className="max-w-2xl mx-auto space-y-8">
             <div className="text-center space-y-4">
+              <img 
+                src={pettryMascot} 
+                alt="Pettry" 
+                className="w-32 h-32 mx-auto rounded-full object-cover animate-fade-in"
+              />
               <h2 className="text-4xl md:text-5xl font-bold">
-                Welcome to{' '}
+                Hey! I'm{' '}
                 <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                  PawPal
+                  Pettry
                 </span>
               </h2>
               <p className="text-xl text-muted-foreground max-w-lg mx-auto">
-                Your AI shopping assistant that finds the perfect products for your furry friend
+                Your AI friend who helps you find perfect products for your pet! Let's start by taking a photo 📸
               </p>
             </div>
             
@@ -75,7 +82,7 @@ const Index = () => {
       <footer className="border-t border-border/50 mt-20">
         <div className="container mx-auto px-4 py-8">
           <p className="text-center text-sm text-muted-foreground">
-            © 2024 PawPal Pet Store. Powered by Gemini AI 🐾
+            © 2024 Pettry - AI Pet Solutions. Powered by Gemini AI 🐧
           </p>
         </div>
       </footer>

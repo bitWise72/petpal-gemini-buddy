@@ -85,12 +85,39 @@ export const VoiceInterface = ({
       utterance.pitch = 1.0;
       utterance.volume = 1.0;
       
-      utterance.onstart = () => setIsSpeaking(true);
-      utterance.onend = () => setIsSpeaking(false);
+      utterance.onstart = () => {
+        setIsSpeaking(true);
+        // Stop listening when AI starts speaking
+        if (recognitionRef.current && isListening) {
+          try {
+            recognitionRef.current.stop();
+          } catch (e) {
+            console.log('Recognition already stopped');
+          }
+        }
+      };
+      
+      utterance.onend = () => {
+        setIsSpeaking(false);
+        // Resume listening after AI finishes speaking
+        if (recognitionRef.current && isListening) {
+          try {
+            recognitionRef.current.start();
+          } catch (e) {
+            console.log('Recognition already started');
+          }
+        }
+      };
+      
+      // Stop speaking if user starts talking
+      if (isListening) {
+        synthRef.current.cancel();
+        setIsSpeaking(false);
+      }
       
       synthRef.current.speak(utterance);
     }
-  }, [assistantMessage]);
+  }, [assistantMessage, isListening]);
 
   return (
     <div className="flex items-center gap-4">

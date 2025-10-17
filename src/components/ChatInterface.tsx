@@ -7,6 +7,7 @@ import { VoiceInterface } from './VoiceInterface';
 import { ProductRecommendations } from './ProductRecommendations';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import pettryMascot from '@/assets/pettry-mascot.jpg';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -30,7 +31,7 @@ export const ChatInterface = ({ petAnalysis, onCheckout }: ChatInterfaceProps) =
 
   useEffect(() => {
     // Initial greeting
-    const greeting = `Hello! I've analyzed your pet. ${petAnalysis}\n\nLet me ask you a few questions to find the perfect products! What's your pet's name, and are there any specific needs or concerns you have?`;
+    const greeting = `Hey! So I just looked at your pet - ${petAnalysis}\n\nThey look adorable! What's their name? And tell me, anything specific you're looking for or any concerns you have about them?`;
     setMessages([{ role: 'assistant', content: greeting }]);
   }, [petAnalysis]);
 
@@ -84,13 +85,32 @@ export const ChatInterface = ({ petAnalysis, onCheckout }: ChatInterfaceProps) =
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
+      <div className="flex items-center gap-3 mb-4">
+        <img 
+          src={pettryMascot} 
+          alt="Pettry" 
+          className="w-12 h-12 rounded-full object-cover animate-pulse"
+        />
+        <div>
+          <h2 className="text-xl font-bold">Chat with Pettry</h2>
+          <p className="text-sm text-muted-foreground">Your AI pet shopping buddy</p>
+        </div>
+      </div>
+
       <Card className="p-6 bg-card/50 backdrop-blur">
         <div className="h-[500px] overflow-y-auto mb-4 space-y-4">
           {messages.map((msg, idx) => (
             <div
               key={idx}
-              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} items-start gap-2`}
             >
+              {msg.role === 'assistant' && (
+                <img 
+                  src={pettryMascot} 
+                  alt="Pettry" 
+                  className="w-8 h-8 rounded-full object-cover mt-1"
+                />
+              )}
               <div
                 className={`max-w-[80%] rounded-2xl px-4 py-3 ${
                   msg.role === 'user'
