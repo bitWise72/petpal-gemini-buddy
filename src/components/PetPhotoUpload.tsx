@@ -77,11 +77,24 @@ export const PetPhotoUpload = ({ onAnalysisComplete }: PetPhotoUploadProps) => {
   const analyzePhoto = async (base64: string) => {
     setIsAnalyzing(true);
     try {
+      // Get current session to ensure we're authenticated
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('You must be logged in to analyze photos');
+      }
+
       const { data, error } = await supabase.functions.invoke('analyze-pet-photo', {
         body: { imageData: base64 }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Edge function error:', error);
+        throw error;
+      }
+
+      if (!data?.analysis) {
+        throw new Error('No analysis data received');
+      }
 
       toast({
         title: "Got it! 🐧",
@@ -93,7 +106,7 @@ export const PetPhotoUpload = ({ onAnalysisComplete }: PetPhotoUploadProps) => {
       console.error('Error analyzing photo:', error);
       toast({
         title: "Oops!",
-        description: "I couldn't analyze the photo. Mind trying again?",
+        description: error instanceof Error ? error.message : "I couldn't analyze the photo. Mind trying again?",
         variant: "destructive"
       });
     } finally {
