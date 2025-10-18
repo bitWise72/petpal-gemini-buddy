@@ -77,9 +77,6 @@ export const VoiceInterface = ({
 
   useEffect(() => {
     if (assistantMessage && synthRef.current) {
-      // Stop any ongoing speech
-      synthRef.current.cancel();
-      
       const utterance = new SpeechSynthesisUtterance(assistantMessage);
       utterance.rate = 1.0;
       utterance.pitch = 1.0;
@@ -87,37 +84,25 @@ export const VoiceInterface = ({
       
       utterance.onstart = () => {
         setIsSpeaking(true);
-        // Stop listening when AI starts speaking
-        if (recognitionRef.current && isListening) {
-          try {
-            recognitionRef.current.stop();
-          } catch (e) {
-            console.log('Recognition already stopped');
-          }
-        }
       };
       
       utterance.onend = () => {
         setIsSpeaking(false);
-        // Resume listening after AI finishes speaking
-        if (recognitionRef.current && isListening) {
-          try {
-            recognitionRef.current.start();
-          } catch (e) {
-            console.log('Recognition already started');
-          }
-        }
+        // Auto-enable listening after AI finishes speaking
+        onToggleListening();
       };
-      
-      // Stop speaking if user starts talking
-      if (isListening) {
-        synthRef.current.cancel();
-        setIsSpeaking(false);
-      }
       
       synthRef.current.speak(utterance);
     }
-  }, [assistantMessage, isListening]);
+  }, [assistantMessage]);
+
+  // Interrupt AI speech when user starts talking
+  useEffect(() => {
+    if (isListening && synthRef.current?.speaking) {
+      synthRef.current.cancel();
+      setIsSpeaking(false);
+    }
+  }, [isListening]);
 
   return (
     <div className="flex items-center gap-4">

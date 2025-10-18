@@ -30,10 +30,22 @@ export const ChatInterface = ({ petAnalysis, onCheckout }: ChatInterfaceProps) =
   const { toast } = useToast();
 
   useEffect(() => {
-    // Initial greeting
-    const greeting = `Hey! So I just looked at your pet - ${petAnalysis}\n\nThey look adorable! What's their name? And tell me, anything specific you're looking for or any concerns you have about them?`;
-    setMessages([{ role: 'assistant', content: greeting }]);
+    // Load conversation from cache or start new
+    const cachedConversation = localStorage.getItem('pet-chat-conversation');
+    if (cachedConversation) {
+      setMessages(JSON.parse(cachedConversation));
+    } else {
+      const greeting = `Hey! So I just looked at your pet - ${petAnalysis}\n\nThey look adorable! What's their name? And tell me, anything specific you're looking for or any concerns you have about them?`;
+      setMessages([{ role: 'assistant', content: greeting }]);
+    }
   }, [petAnalysis]);
+
+  // Save conversation to cache whenever messages change
+  useEffect(() => {
+    if (messages.length > 0) {
+      localStorage.setItem('pet-chat-conversation', JSON.stringify(messages));
+    }
+  }, [messages]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -79,8 +91,10 @@ export const ChatInterface = ({ petAnalysis, onCheckout }: ChatInterfaceProps) =
   };
 
   const handleVoiceTranscript = (text: string) => {
-    sendMessage(text);
-    setIsListening(false);
+    if (text.trim()) {
+      sendMessage(text);
+      setIsListening(false);
+    }
   };
 
   return (
