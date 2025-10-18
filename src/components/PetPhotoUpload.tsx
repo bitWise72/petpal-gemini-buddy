@@ -77,12 +77,6 @@ export const PetPhotoUpload = ({ onAnalysisComplete }: PetPhotoUploadProps) => {
   const analyzePhoto = async (base64: string) => {
     setIsAnalyzing(true);
     try {
-      // Get current session to ensure we're authenticated
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error('You must be logged in to analyze photos');
-      }
-
       const { data, error } = await supabase.functions.invoke('analyze-pet-photo', {
         body: { imageData: base64 }
       });
