@@ -60,8 +60,16 @@ const Index = () => {
     );
   }
 
+  // Redirect handled by useEffect, show loading while redirecting
   if (!user) {
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <img src={pettryMascot} alt="Pettry" className="w-24 h-24 mx-auto rounded-full object-cover animate-pulse" />
+          <p className="mt-4 text-muted-foreground">Redirecting to login...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
