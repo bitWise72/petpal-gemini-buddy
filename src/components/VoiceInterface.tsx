@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Mic, MicOff, Volume2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface VoiceInterfaceProps {
   onTranscript: (text: string) => void;
@@ -18,8 +19,10 @@ export const VoiceInterface = ({
 }: VoiceInterfaceProps) => {
   const { toast } = useToast();
   const recognitionRef = useRef<any>(null);
-  const synthRef = useRef<SpeechSynthesis | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
+  const vadIntervalRef = useRef<number | null>(null);
 
   useEffect(() => {
     // Initialize speech recognition
@@ -42,23 +45,36 @@ export const VoiceInterface = ({
 
       recognitionRef.current.onerror = (event: any) => {
         console.error('Speech recognition error:', event.error);
-        toast({
-          title: "Voice Error",
-          description: "Could not access microphone. Please check permissions.",
-          variant: "destructive"
-        });
+        if (event.error !== 'no-speech') {
+          toast({
+            title: "Voice Error",
+            description: "Could not access microphone. Please check permissions.",
+            variant: "destructive"
+          });
+        }
       };
     }
 
-    // Initialize speech synthesis
-    synthRef.current = window.speechSynthesis;
+    // Initialize audio context for VAD
+    const initAudioContext = async () => {
+      try {
+        const ctx = new AudioContext();
+        setAudioContext(ctx);
+      } catch (error) {
+        console.error('Error initializing audio context:', error);
+      }
+    };
+    initAudioContext();
 
     return () => {
       if (recognitionRef.current) {
         recognitionRef.current.stop();
       }
-      if (synthRef.current) {
-        synthRef.current.cancel();
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+      if (vadIntervalRef.current) {
+        clearInterval(vadIntervalRef.current);
       }
     };
   }, []);
@@ -76,31 +92,109 @@ export const VoiceInterface = ({
   }, [isListening]);
 
   useEffect(() => {
-    if (assistantMessage && synthRef.current) {
-      const utterance = new SpeechSynthesisUtterance(assistantMessage);
-      utterance.rate = 1.0;
-      utterance.pitch = 1.0;
-      utterance.volume = 1.0;
-      
-      utterance.onstart = () => {
+    const playTTS = async () => {
+      if (!assistantMessage) return;
+
+      try {
         setIsSpeaking(true);
-      };
-      
-      utterance.onend = () => {
+        
+        const { data, error } = await supabase.functions.invoke('text-to-speech', {
+          body: { text: assistantMessage }
+        });
+
+        if (error) throw error;
+
+        // Create audio element and play
+        const audioBlob = new Blob([data], { type: 'audio/mpeg' });
+        const audioUrl = URL.createObjectURL(audioBlob);
+        
+        const audio = new Audio(audioUrl);
+        audioRef.current = audio;
+        
+        audio.onended = () => {
+          setIsSpeaking(false);
+          URL.revokeObjectURL(audioUrl);
+          // Auto-enable listening after AI finishes speaking
+          if (!isListening) {
+            onToggleListening();
+          }
+        };
+
+        audio.onerror = () => {
+          setIsSpeaking(false);
+          URL.revokeObjectURL(audioUrl);
+          toast({
+            title: "Audio Error",
+            description: "Failed to play audio response",
+            variant: "destructive"
+          });
+        };
+
+        await audio.play();
+        
+        // Start VAD to detect user interruption
+        startVAD();
+      } catch (error) {
+        console.error('TTS error:', error);
         setIsSpeaking(false);
-        // Auto-enable listening after AI finishes speaking
-        onToggleListening();
-      };
-      
-      synthRef.current.speak(utterance);
-    }
+        toast({
+          title: "TTS Error",
+          description: "Failed to generate speech. Please check your OpenAI API key.",
+          variant: "destructive"
+        });
+      }
+    };
+
+    playTTS();
   }, [assistantMessage]);
 
-  // Interrupt AI speech when user starts talking
+  const startVAD = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const analyser = audioContext!.createAnalyser();
+      const microphone = audioContext!.createMediaStreamSource(stream);
+      microphone.connect(analyser);
+      analyser.fftSize = 512;
+      
+      const bufferLength = analyser.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+      
+      vadIntervalRef.current = window.setInterval(() => {
+        analyser.getByteFrequencyData(dataArray);
+        const average = dataArray.reduce((a, b) => a + b) / bufferLength;
+        
+        // If user starts speaking (volume threshold)
+        if (average > 30 && isSpeaking) {
+          // Stop AI speech and start listening
+          if (audioRef.current) {
+            audioRef.current.pause();
+            setIsSpeaking(false);
+          }
+          if (!isListening) {
+            onToggleListening();
+          }
+          // Clean up VAD
+          if (vadIntervalRef.current) {
+            clearInterval(vadIntervalRef.current);
+            vadIntervalRef.current = null;
+          }
+          stream.getTracks().forEach(track => track.stop());
+        }
+      }, 100);
+    } catch (error) {
+      console.error('VAD error:', error);
+    }
+  };
+
+  // Interrupt AI speech when user manually starts talking
   useEffect(() => {
-    if (isListening && synthRef.current?.speaking) {
-      synthRef.current.cancel();
+    if (isListening && audioRef.current && isSpeaking) {
+      audioRef.current.pause();
       setIsSpeaking(false);
+      if (vadIntervalRef.current) {
+        clearInterval(vadIntervalRef.current);
+        vadIntervalRef.current = null;
+      }
     }
   }, [isListening]);
 

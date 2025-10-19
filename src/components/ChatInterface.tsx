@@ -20,7 +20,7 @@ interface ChatInterfaceProps {
   onCheckout: () => void;
 }
 
-export const ChatInterface = ({ petAnalysis, onCheckout }: ChatInterfaceProps) => {
+export const ChatInterface = ({ petAnalysis, petImageUrl, onCheckout }: ChatInterfaceProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [isListening, setIsListening] = useState(false);
@@ -116,8 +116,19 @@ export const ChatInterface = ({ petAnalysis, onCheckout }: ChatInterfaceProps) =
         </div>
       </div>
 
-      <Card className="p-6 bg-card/50 backdrop-blur">
-        <div className="h-[500px] overflow-y-auto mb-4 space-y-4">
+      <Card 
+        className="p-6 bg-card/50 backdrop-blur relative overflow-hidden"
+        style={{
+          backgroundImage: petImageUrl ? `url(${petImageUrl})` : 'none',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+        }}
+      >
+        {petImageUrl && (
+          <div className="absolute inset-0 bg-background/85 backdrop-blur-sm" />
+        )}
+        <div className="h-[500px] overflow-y-auto mb-4 space-y-4 relative z-10">
           {messages.map((msg, idx) => (
             <div
               key={idx}
@@ -155,7 +166,7 @@ export const ChatInterface = ({ petAnalysis, onCheckout }: ChatInterfaceProps) =
           <div ref={messagesEndRef} />
         </div>
 
-        <div className="flex gap-2 items-center">
+        <div className="flex gap-2 items-center relative z-10">
           <VoiceInterface
             onTranscript={handleVoiceTranscript}
             isListening={isListening}
