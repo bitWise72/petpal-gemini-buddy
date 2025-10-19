@@ -2,7 +2,6 @@ import { useEffect, useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Mic, MicOff, Volume2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 
 interface VoiceInterfaceProps {
   onTranscript: (text: string) => void;
@@ -19,7 +18,6 @@ export const VoiceInterface = ({
 }: VoiceInterfaceProps) => {
   const { toast } = useToast();
   const recognitionRef = useRef<any>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
   const vadIntervalRef = useRef<number | null>(null);
@@ -70,9 +68,7 @@ export const VoiceInterface = ({
       if (recognitionRef.current) {
         recognitionRef.current.stop();
       }
-      if (audioRef.current) {
-        audioRef.current.pause();
-      }
+      window.speechSynthesis.cancel();
       if (vadIntervalRef.current) {
         clearInterval(vadIntervalRef.current);
       }
@@ -92,45 +88,51 @@ export const VoiceInterface = ({
   }, [isListening]);
 
   useEffect(() => {
-    const playTTS = async () => {
+    const playTTS = () => {
       if (!assistantMessage) return;
 
       try {
+        // Cancel any ongoing speech
+        window.speechSynthesis.cancel();
+        
         setIsSpeaking(true);
         
-        const { data, error } = await supabase.functions.invoke('text-to-speech', {
-          body: { text: assistantMessage }
-        });
-
-        if (error) throw error;
-
-        // Create audio element and play
-        const audioBlob = new Blob([data], { type: 'audio/mpeg' });
-        const audioUrl = URL.createObjectURL(audioBlob);
+        const utterance = new SpeechSynthesisUtterance(assistantMessage);
         
-        const audio = new Audio(audioUrl);
-        audioRef.current = audio;
+        // Select a natural-sounding voice
+        const voices = window.speechSynthesis.getVoices();
+        const preferredVoice = voices.find(v => 
+          v.name.includes('Samantha') || 
+          v.name.includes('Google US English') ||
+          v.name.includes('Microsoft Zira')
+        ) || voices.find(v => v.lang.startsWith('en')) || voices[0];
         
-        audio.onended = () => {
+        if (preferredVoice) {
+          utterance.voice = preferredVoice;
+        }
+        
+        utterance.rate = 1.1;
+        utterance.pitch = 1.0;
+        utterance.volume = 1.0;
+        
+        utterance.onend = () => {
           setIsSpeaking(false);
-          URL.revokeObjectURL(audioUrl);
           // Auto-enable listening after AI finishes speaking
           if (!isListening) {
             onToggleListening();
           }
         };
 
-        audio.onerror = () => {
+        utterance.onerror = () => {
           setIsSpeaking(false);
-          URL.revokeObjectURL(audioUrl);
           toast({
-            title: "Audio Error",
+            title: "Speech Error",
             description: "Failed to play audio response",
             variant: "destructive"
           });
         };
 
-        await audio.play();
+        window.speechSynthesis.speak(utterance);
         
         // Start VAD to detect user interruption
         startVAD();
@@ -138,14 +140,21 @@ export const VoiceInterface = ({
         console.error('TTS error:', error);
         setIsSpeaking(false);
         toast({
-          title: "TTS Error",
-          description: "Failed to generate speech. Please check your OpenAI API key.",
+          title: "Speech Error",
+          description: "Failed to generate speech",
           variant: "destructive"
         });
       }
     };
 
-    playTTS();
+    // Load voices if not already loaded
+    if (window.speechSynthesis.getVoices().length === 0) {
+      window.speechSynthesis.onvoiceschanged = () => {
+        playTTS();
+      };
+    } else {
+      playTTS();
+    }
   }, [assistantMessage]);
 
   const startVAD = async () => {
@@ -166,10 +175,8 @@ export const VoiceInterface = ({
         // If user starts speaking (volume threshold)
         if (average > 30 && isSpeaking) {
           // Stop AI speech and start listening
-          if (audioRef.current) {
-            audioRef.current.pause();
-            setIsSpeaking(false);
-          }
+          window.speechSynthesis.cancel();
+          setIsSpeaking(false);
           if (!isListening) {
             onToggleListening();
           }
@@ -188,8 +195,8 @@ export const VoiceInterface = ({
 
   // Interrupt AI speech when user manually starts talking
   useEffect(() => {
-    if (isListening && audioRef.current && isSpeaking) {
-      audioRef.current.pause();
+    if (isListening && isSpeaking) {
+      window.speechSynthesis.cancel();
       setIsSpeaking(false);
       if (vadIntervalRef.current) {
         clearInterval(vadIntervalRef.current);
