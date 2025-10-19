@@ -14,7 +14,7 @@ serve(async (req) => {
   try {
     // Validate input
     const body = await req.json();
-    const { messages, petAnalysis, conversationId } = body;
+    const { messages, petAnalysis, petDetails, conversationId } = body;
 
     if (!Array.isArray(messages)) {
       return new Response(JSON.stringify({ error: 'Invalid messages format' }), {
@@ -73,10 +73,22 @@ serve(async (req) => {
 
     console.log('Chat request received, fetched products:', products?.length);
 
-    // Build context-aware system prompt
+    // Build context-aware system prompt with structured pet data
+    const petInfo = petDetails 
+      ? `Pet Type: ${petDetails.type}
+Breed: ${petDetails.breed}
+Age: ${petDetails.age}
+Size: ${petDetails.size}
+Health: ${petDetails.health}
+Characteristics: ${petDetails.characteristics?.join(', ')}
+Additional Details: ${petDetails.additionalDetails || 'None'}
+
+Friendly Summary: ${petAnalysis}`
+      : `Pet Information: ${petAnalysis || 'Not yet provided'}`;
+
     const systemPrompt = `You are Pettry, a friendly AI penguin who helps pet owners find the perfect products. You're helpful, warm, and chat like a friend - not a robotic assistant.
 
-Pet Information: ${petAnalysis || 'Not yet provided'}
+${petInfo}
 
 Available Products:
 ${products?.map(p => `- ${p.name} ($${p.price}): ${p.description} [Category: ${p.category}, Pet Type: ${p.pet_type}]`).join('\n')}

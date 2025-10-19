@@ -90,6 +90,11 @@ export const PetPhotoUpload = ({ onAnalysisComplete }: PetPhotoUploadProps) => {
         throw new Error('No analysis data received');
       }
 
+      // Store structured pet details in localStorage for personalized recommendations
+      if (data.petDetails) {
+        localStorage.setItem('pet-structured-data', JSON.stringify(data.petDetails));
+      }
+
       toast({
         title: "Got it! 🐧",
         description: "Let me chat with you about your pet!"

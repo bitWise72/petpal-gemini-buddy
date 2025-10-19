@@ -60,10 +60,15 @@ export const ChatInterface = ({ petAnalysis, onCheckout }: ChatInterfaceProps) =
     setIsLoading(true);
 
     try {
+      // Get structured pet data for better recommendations
+      const petStructuredData = localStorage.getItem('pet-structured-data');
+      const petDetails = petStructuredData ? JSON.parse(petStructuredData) : null;
+
       const { data, error } = await supabase.functions.invoke('chat-assistant', {
         body: {
           messages: [...messages, userMessage],
           petAnalysis,
+          petDetails, // Send structured data to backend
         }
       });
 
