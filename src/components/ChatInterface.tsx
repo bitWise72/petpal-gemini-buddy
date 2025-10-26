@@ -18,9 +18,15 @@ interface ChatInterfaceProps {
   petAnalysis: string;
   petImageUrl: string;
   onCheckout: () => void;
+  enableVoice?: boolean;
 }
 
-export const ChatInterface = ({ petAnalysis, petImageUrl, onCheckout }: ChatInterfaceProps) => {
+export const ChatInterface = ({ 
+  petAnalysis, 
+  petImageUrl, 
+  onCheckout,
+  enableVoice = true 
+}: ChatInterfaceProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [isListening, setIsListening] = useState(false);
@@ -167,12 +173,14 @@ export const ChatInterface = ({ petAnalysis, petImageUrl, onCheckout }: ChatInte
         </div>
 
         <div className="flex gap-2 items-center relative z-10">
-          <VoiceInterface
-            onTranscript={handleVoiceTranscript}
-            isListening={isListening}
-            onToggleListening={() => setIsListening(!isListening)}
-            assistantMessage={messages[messages.length - 1]?.role === 'assistant' ? messages[messages.length - 1].content : undefined}
-          />
+          {enableVoice && (
+            <VoiceInterface
+              onTranscript={handleVoiceTranscript}
+              isListening={isListening}
+              onToggleListening={() => setIsListening(!isListening)}
+              assistantMessage={messages[messages.length - 1]?.role === 'assistant' ? messages[messages.length - 1].content : undefined}
+            />
+          )}
           
           <Input
             value={inputText}
