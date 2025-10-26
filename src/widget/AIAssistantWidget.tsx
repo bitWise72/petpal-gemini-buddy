@@ -39,27 +39,27 @@ export const AIAssistantWidget = ({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50">
+    <div className="min-h-full bg-gradient-to-br from-purple-50 to-pink-50 flex flex-col">
       <style>{`
         :root {
           --primary: ${primaryColor};
         }
       `}</style>
       
-      <header className="bg-white shadow-sm">
-        <div className="container mx-auto px-4 py-6">
+      <header className="bg-white shadow-sm shrink-0">
+        <div className="px-4 py-4">
           <div className="flex items-center gap-3">
             <img 
               src={mascotImage} 
               alt="Assistant" 
-              className="w-12 h-12 rounded-full"
+              className="w-10 h-10 rounded-full"
             />
-            <h1 className="text-3xl font-bold text-primary">AI Pet Assistant</h1>
+            <h1 className="text-xl font-bold text-primary">AI Pet Assistant</h1>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="flex-1 px-4 py-6 overflow-auto">
         {appState === 'upload' && (
           <PetPhotoUpload onAnalysisComplete={handleAnalysisComplete} />
         )}
@@ -78,10 +78,8 @@ export const AIAssistantWidget = ({
         )}
       </main>
 
-      <footer className="bg-white border-t mt-12">
-        <div className="container mx-auto px-4 py-6 text-center text-gray-600">
-          <p>Powered by AI Pet Assistant Widget</p>
-        </div>
+      <footer className="bg-white border-t py-3 text-center text-xs text-muted-foreground shrink-0">
+        <p>Powered by AI Pet Assistant</p>
       </footer>
     </div>
   );
