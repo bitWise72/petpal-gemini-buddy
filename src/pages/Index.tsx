@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { FloatingChatWidget } from '@/components/FloatingChatWidget';
+import pettryLogo from '@/assets/pettry-mascot.jpg';
 
 const Index = () => {
   const [config, setConfig] = useState<any>(null);
@@ -21,6 +22,11 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-50 to-blue-50">
       {/* Demo content - website would have their own content here */}
       <div className="container mx-auto px-4 py-20 text-center">
+        <img 
+          src={pettryLogo} 
+          alt="Pettry Logo" 
+          className="w-32 h-32 mx-auto mb-8 rounded-full object-cover shadow-lg"
+        />
         <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
           Welcome to Pet Paradise
         </h1>
